@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <style media="screen">
+      canvas{
+        border: 1px solid grey;
+        background: lightgrey;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Basic Game Structure</h1>
+    <canvas id="game-canvas" width="0" height="0"></canvas>
+    <h1>Project</h1>
+    <ul>
+      <li>Group Lead</li>
+      <li>Group Members</li>
+      <li>Game Name</li>
+      <li>Number of players</li>
+      <li>Some nicely drawn snpshots of the game board</li>
+      <li>Game rules</li>
+    </ul>
+    <script type="text/javascript">
+      (function () {
+        function drawEdge(endPoints, color) {
+          ctx.beginPath();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 4;
+          ctx.moveTo(endPoints[0][0] + borderWidth, endPoints[0][1] + borderWidth);
+          ctx.lineTo(endPoints[1][0] + borderWidth, endPoints[1][1] + borderWidth);
+          ctx.stroke();
+        }
+
+        function drawRect(endPoints, color, direction) {
+          ctx.fillStyle = color;
+          var x_index = Math.floor(endPoints[0][0]/gap);//index of top left corner
+          var y_index = Math.floor(endPoints[0][1]/gap);//index of top left corner
+
+          if(direction == "horizontal"){
+            if(y_index != 0 && verticalEdges[x_index][y_index - 1] && verticalEdges[x_index + 1][y_index - 1]
+                && horizontalEdges[x_index][y_index - 1] && !boxes[x_index][y_index-1]) {//checking three edges on top of the current edge
+                  ctx.fillRect(endPoints[0][0]+borderWidth,endPoints[0][1]-gap+borderWidth, gap, gap);
+                  boxes[x_index][y_index-1] = 1;
+                }
+            if(y_index != numberOfgaps+1 && verticalEdges[x_index][y_index] && verticalEdges[x_index + 1][y_index]
+                && horizontalEdges[x_index][y_index + 1] && !boxes[x_index][y_index]) {//checking three edges on bottom of the current edge
+                  ctx.fillRect(endPoints[0][0]+borderWidth,endPoints[0][1]+borderWidth, gap, gap);
+                  boxes[x_index][y_index] = 1;
+                }
+          }
+
+          if(direction == "vertical"){
+            if(x_index != 0 && horizontalEdges[x_index-1][y_index] && horizontalEdges[x_index - 1][y_index + 1]
+                && verticalEdges[x_index-1][y_index] && !boxes[x_index-1][y_index]) {//checking three edges on left of the current edge
+                  ctx.fillRect(endPoints[0][0]-gap+borderWidth,endPoints[0][1]+borderWidth, gap, gap);
+                  boxes[x_index-1][y_index] = 1;
+                }
+            if(x_index != numberOfgaps+1 && horizontalEdges[x_index][y_index] && horizontalEdges[x_index][y_index+1]
+                && verticalEdges[x_index+1][y_index] && !boxes[x_index][y_index]) {//checking three edges on right of the current edge
+                  ctx.fillRect(endPoints[0][0]+borderWidth,endPoints[0][1]+borderWidth, gap, gap);
+                  boxes[x_index][y_index] = 1;
+                }
+          }
+
+
+        }
+
+        function giveMinIndices(arr) {
+          var retValue = [];
+
+          if(arr[0]<=arr[1] && arr[0]<=arr[2] && arr[0]<=arr[3]){
+            retValue.push(0);
+            if(arr[1]<=arr[2] && arr[1]<=arr[3]){
+              retValue.push(1);
+            }else if(arr[2]<=arr[1] && arr[2]<=arr[3]){
+              retValue.push(2);
+            }else{
+              retValue.push(3);
+            }
+          }else if(arr[1]<=arr[0] && arr[1]<=arr[2] && arr[1]<=arr[3]){
+            retValue.push(1);
+            if(arr[0]<=arr[2] && arr[0]<=arr[3]){
+              retValue.push(0);
+            }else if(arr[2]<=arr[0] && arr[2]<=arr[3]){
+              retValue.push(2);
+            }else{
+              retValue.push(3);
+            }
+          }else if(arr[2]<=arr[0] && arr[2]<=arr[1] && arr[2]<=arr[3]){
+            retValue.push(2);
+            if(arr[0]<=arr[1] && arr[0]<=arr[3]){
+              retValue.push(0);
+            }else if(arr[1]<=arr[0] && arr[1]<=arr[3]){
+              retValue.push(1);
+            }else{
+              retValue.push(3);
+            }
+          }else{
+            retValue.push(3);
+            if(arr[0]<=arr[1] && arr[0]<=arr[2]){
+              retValue.push(0);
+            }else if(arr[1]<=arr[0] && arr[1]<=arr[2]){
+              retValue.push(1);
+            }else{
+              retValue.push(2);
+            }
+          }
+          if(retValue[0] > retValue[1]){
+            retValue = [retValue[1], retValue[0]]
+          }
+          return retValue;
+        }
+
+
+        var myCanvas = document.getElementById("game-canvas");
+        if(myCanvas && myCanvas.getContext){
+          var numberOfgaps = 10;
+          var borderWidth = 20;
+          myCanvas.width = 240 + borderWidth*2;
+          myCanvas.height = 240 + borderWidth*2;
+
+          var ctx = myCanvas.getContext("2d");
+          if(ctx){
+            ctx.fillStyle = "grey";//setting up the fill color
+            ctx.strokeStyle = "grey"; //setting up the line color
+            ctx.lineWidth = 2;
+            var gap = (myCanvas.width-2*borderWidth)/numberOfgaps; //setting up the gap width
+
+            /////////////////making arrayof small dots and drawing small dots
+            var points = []; //2D array of points
+            var x = y = borderWidth;
+            for (var i = 0; i <= numberOfgaps; i++) {
+              for (var j = 0; j <= numberOfgaps; j++) {
+                points.push([x, y]);
+                x = x + gap;
+              }
+              y = y + gap;
+              x = 20;
+            }
+
+            //the following loop draws the tiny dots
+            for (i = 0; i < points.length; i++) {
+              ctx.fillRect(points[i][0]-2,points[i][1]-2, 4, 4);//4 is the fixed size of a dot or point
+            }
+            /////////////////////////
+
+            ////////////////Drawing grid lines///////////////
+            ctx.beginPath();
+          ////////////Horizontal Lines///////////////
+          var i = 0;
+          for (var j = 0; j <= numberOfgaps; j++) {
+            ctx.moveTo(points[i + j*(numberOfgaps + 1)][0], points[i + j*(numberOfgaps + 1)][1]);
+            for (i = 1 ; i <= numberOfgaps; i++) {
+              ctx.lineTo(points[i+j*(numberOfgaps + 1)][0], points[i+j*(numberOfgaps + 1)][1]);
+            }
+            i = 0;
+          }
+
+          ///////////vertical Linaes/////////////////
+          var i = 0;
+          for (var j = 0; j <= numberOfgaps; j++) {
+            ctx.moveTo(points[i*(numberOfgaps + 1) + j][0], points[i*(numberOfgaps + 1) + j][1]);
+            for (i = 1 ; i <= numberOfgaps; i++) {
+              ctx.lineTo(points[i*(numberOfgaps + 1)+j][0], points[i*(numberOfgaps + 1)+j][1]);
+            }
+            i = 0;
+          }
+          //////////
+          ctx.stroke();
+
+        ////////////////////////////////////////////////
+
+        /////////Initilaizing arrays of horizontal and vertical edges and boxes //////
+              var horizontalEdges = [];
+              var verticalEdges = [];
+              var boxes = [];//these are the boxes to be scorred
+              for (var i = 0; i < numberOfgaps + 1; i++) {
+                horizontalEdges[i] = [];
+                for (var j = 0; j < numberOfgaps + 1; j++) {
+                  horizontalEdges[i][j] = 0;
+                }
+              }
+
+              for (var i = 0; i < numberOfgaps + 1; i++) {
+                verticalEdges[i] = [];
+                for (var j = 0; j < numberOfgaps + 1; j++) {
+                  verticalEdges[i][j] = 0;
+                }
+              }
+
+              for (var i = 0; i < numberOfgaps; i++) {
+                boxes[i] = [];
+                for (var j = 0; j < numberOfgaps; j++) {
+                  boxes[i][j] = 0;
+                }
+              }
+              /////////////////////////////////////////////////////////////////////////////
+              //////////////here we are going to accept a click/////////////////////
+              var canvasLeft = myCanvas.offsetLeft;
+              var canvasTop = myCanvas.offsetTop;
+              ctx.strokeStyle = "red";
+
+              myCanvas.addEventListener("click", function (e) {//e for event
+                var x = e.pageX - canvasLeft - borderWidth;
+                var y = e.pageY - canvasTop - borderWidth;
+                //console.log({x, y});
+                ///////////
+                if((x >= 0 && x <= (myCanvas.width - borderWidth)//if you are clicking within the marked boundries then ...
+                    && y >= 0 && y <= (myCanvas.height - borderWidth))
+                      ){
+
+                        if(x >= 0 && y >= 0 && x <= myCanvas.width - borderWidth*2
+                          && y <= myCanvas.width - borderWidth*2){//means click is in the interior
+
+                            if(Math.floor(x/gap)*gap == Math.ceil(x/gap)*gap){
+                              console.log("click on vertical line");
+                              var p0 = [Math.floor(x/gap)*gap, Math.floor(y/gap)*gap];
+                              var p2 = [Math.floor(x/gap)*gap, Math.ceil(y/gap)*gap];
+                              var endPoints = [p0, p2];
+                            }else if(Math.floor(y/gap)*gap == Math.ceil(y/gap)*gap){
+                              console.log("click on horizontal line");
+                              var p0 = [Math.floor(x/gap)*gap, Math.floor(y/gap)*gap];
+                              var p1 = [Math.ceil(x/gap)*gap, Math.floor(y/gap)*gap];
+                              var endPoints = [p0, p1];
+                            }else{
+                              console.log("click in the box");
+                              var p0 = [Math.floor(x/gap)*gap, Math.floor(y/gap)*gap];
+                              var p1 = [Math.ceil(x/gap)*gap, Math.floor(y/gap)*gap];
+                              var p2 = [Math.floor(x/gap)*gap, Math.ceil(y/gap)*gap];
+                              var p3 = [Math.ceil(x/gap)*gap, Math.ceil(y/gap)*gap];
+
+                              var fourCorners = [p0, p1, p2, p3];
+                              //console.log(fourCorners);
+                              //these d0 through d3 are the distances of click from the four corners
+                              var d0 = (Math.pow(x - Math.floor(x/gap)*gap, 2) + Math.pow(y - Math.floor(y/gap)*gap, 2));
+                              var d1 = (Math.pow(x - Math.ceil(x/gap)*gap, 2) + Math.pow(y - Math.floor(y/gap)*gap, 2));
+                              var d2 = (Math.pow(x - Math.floor(x/gap)*gap, 2) + Math.pow(y - Math.ceil(y/gap)*gap, 2));
+                              var d3 = (Math.pow(x - Math.ceil(x/gap)*gap, 2) + Math.pow(y - Math.ceil(y/gap)*gap, 2));
+
+                              // console.log([d0, d1, d2, d3]);
+                              var min_indices = giveMinIndices([d0, d1, d2, d3]);
+                              console.log(min_indices);
+                              var endPoints = [fourCorners[min_indices[0]], fourCorners[min_indices[1]]];
+                            }
+                            // console.log(endPoints);
+                            // console.log(horizontalEdges);
+                            // console.log(endPoints[0][1]);
+                            // console.log(endPoints[1][1]);
+                            // console.log([Math.floor(endPoints[0][0]/gap), Math.floor(endPoints[0][1]/gap)]);
+                            if(endPoints[0][1] == endPoints[1][1] && horizontalEdges[Math.floor(endPoints[0][0]/gap)][Math.floor(endPoints[0][1]/gap)] == 0){
+                              horizontalEdges[Math.floor(endPoints[0][0]/gap)][Math.floor(endPoints[0][1]/gap)] = 1;
+                              drawEdge(endPoints, "green");
+                              drawRect(endPoints, "rgba(0, 0, 255, 0.5)", "horizontal");
+                            }else if(endPoints[0][0] == endPoints[1][0] && verticalEdges[Math.floor(endPoints[0][0]/gap)][Math.floor(endPoints[0][1]/gap)] == 0){
+                              verticalEdges[Math.floor(endPoints[0][0]/gap)][Math.floor(endPoints[0][1]/gap)] = 1;
+                              drawEdge(endPoints, "green");
+                              drawRect(endPoints, "rgba(0, 0, 255, 0.5)", "vertical");
+                            }else{
+                              alert("Already Marked");
+                            }
+
+                            // console.log(d1, d2, d3, d4);
+                        }
+
+                    }//if checking the click within the boundries ends
+
+});
+
+
+              ///////////////////////////////////////////////////////////////////////
+
+          }
+        }
+      })();
+
+    </script>
+  </body>
+</html>
